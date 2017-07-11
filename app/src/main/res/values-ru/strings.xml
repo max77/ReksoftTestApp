@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReksoftTestApp</string>
+    <string name="message_too_far">Чтобы добавить адрес, приблизьте карту или введите адрес в поле поиска</string>
+    <string name="error_markers_too_close">Необходимо отступить как минимум на %1$dм от другого маркера</string>
+</resources>

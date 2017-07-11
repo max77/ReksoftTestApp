@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">ReksoftTestApp</string>
+    <string name="title_activity_map">Map</string>
+    <string name="message_too_far">Please zoom in to add locations or use address search box above</string>
+    <string name="error_markers_too_close">Please move at least %1$d meters from an existing marker</string>
+</resources>
