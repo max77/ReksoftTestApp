@@ -54,7 +54,7 @@ public class LocationsOnMapFragment extends Fragment {
     private Listener mListener;
 
     private long mSelectedLocationId = -1;
-
+    private boolean isNew;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,6 +62,8 @@ public class LocationsOnMapFragment extends Fragment {
 
         mRepository = DBRepository.getInstance(getContext());
         mAddressResolver = AddressResolver.getInstance();
+
+        isNew = savedInstanceState == null;
 
         if (savedInstanceState != null)
             mSelectedLocationId = savedInstanceState.getLong(KEY_SELECTED_LOCATION_ID, -1);
@@ -176,7 +178,7 @@ public class LocationsOnMapFragment extends Fragment {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(locations -> {
                                     mMapFragment.populateMap(locations);
-                                    focusOnLocation(mSelectedLocationId);
+                                    focusOnLocation(mSelectedLocationId, isNew);
                                 },
                                 error -> showError(error.getMessage()))
         );
@@ -197,6 +199,8 @@ public class LocationsOnMapFragment extends Fragment {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(locationInfo -> {
                                     mMapFragment.addMarker(locationInfo);
+                                    mSelectedLocationId = locationInfo.getId();
+                                    mMapFragment.focusOnLocation(locationInfo.getId(), false);
                                     if (mListener != null)
                                         mListener.onLocationAdded(locationInfo);
                                 },
@@ -236,7 +240,6 @@ public class LocationsOnMapFragment extends Fragment {
     }
 
     private void handleCameraMove() {
-        mSelectedLocationId = -1;
         LatLngBounds visibleBounds = mMapFragment.getVisibleBounds();
 
         mPlaceFragment.setBoundsBias(visibleBounds);
@@ -261,6 +264,12 @@ public class LocationsOnMapFragment extends Fragment {
     private void handleLocationSelected(long locationId) {
         mSelectedLocationId = locationId;
 
+        if (locationId == -1) {
+            if (mListener != null)
+                mListener.onLocationSelected(null);
+            return;
+        }
+
         mCompositeDisposable.add(
                 mRepository.getLocationInfoById(locationId)
                         .subscribeOn(Schedulers.io())
@@ -273,9 +282,9 @@ public class LocationsOnMapFragment extends Fragment {
         );
     }
 
-    public void focusOnLocation(long locationId) {
+    public void focusOnLocation(long locationId, boolean zoom) {
         mSelectedLocationId = locationId;
-        mMapFragment.focusOnLocation(locationId);
+        mMapFragment.focusOnLocation(locationId, zoom);
     }
 
     private void updateMapPadding() {

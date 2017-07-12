@@ -37,7 +37,7 @@ public class MapActivity extends FragmentActivity {
             fragment.setListener(new LocationsOnMapFragment.Listener() {
                 @Override
                 public void onReady() {
-                    fragment.focusOnLocation(locId);
+                    fragment.focusOnLocation(locId, true);
                 }
 
                 @Override

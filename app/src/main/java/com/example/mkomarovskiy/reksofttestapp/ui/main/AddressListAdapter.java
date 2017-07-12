@@ -22,7 +22,6 @@ class AddressListAdapter extends RecyclerView.Adapter<AddressListAdapter.ViewHol
     private long mSelectedId = -1;
     private Listener mListener;
     private boolean areItemsSelectable;
-    private long mSelectedItemId;
 
     public AddressListAdapter(Listener listener, boolean areItemsSelectable) {
         mListener = listener;
@@ -97,7 +96,7 @@ class AddressListAdapter extends RecyclerView.Adapter<AddressListAdapter.ViewHol
     }
 
     public long getSelectedItemId() {
-        return mSelectedItemId;
+        return mSelectedId;
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {

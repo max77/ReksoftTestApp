@@ -56,7 +56,7 @@ public class AddressListActivity extends AppCompatActivity {
 
             if (twoPanes) {
                 getListAdapter().setSelectedItemId(itemId);
-                mLocationsOnMapFragment.focusOnLocation(itemId);
+                mLocationsOnMapFragment.focusOnLocation(itemId, true);
             } else {
                 showMap(clickedItem.getId());
             }
@@ -107,14 +107,21 @@ public class AddressListActivity extends AppCompatActivity {
 
                 @Override
                 public void onLocationSelected(ILocationInfo locationInfo) {
-                    getListAdapter().setSelectedItemId(locationInfo.getId());
-                    mAddressList.smoothScrollToPosition(getListAdapter().findItemPositionById(locationInfo.getId()));
+                    if (locationInfo == null)
+                        getListAdapter().setSelectedItemId(-1);
+                    else
+                        hiliteListItem(locationInfo);
                 }
 
                 @Override
                 public void onLocationAdded(ILocationInfo locationInfo) {
                     addLocationToList(locationInfo);
-                    mAddressList.smoothScrollToPosition(getListAdapter().getItemCount());
+                    hiliteListItem(locationInfo);
+                }
+
+                private void hiliteListItem(ILocationInfo locationInfo) {
+                    getListAdapter().setSelectedItemId(locationInfo.getId());
+                    mAddressList.smoothScrollToPosition(getListAdapter().findItemPositionById(locationInfo.getId()));
                 }
             });
         }
@@ -164,6 +171,7 @@ public class AddressListActivity extends AppCompatActivity {
 
     private void addLocationToList(ILocationInfo locationInfo) {
         getListAdapter().addItem(locationInfo);
+        mAddressList.scrollToPosition(getListAdapter().getItemCount() - 1);
         showListOrEmpty();
     }
 

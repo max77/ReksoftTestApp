@@ -104,6 +104,11 @@ public class MyMapFragment extends SupportMapFragment {
             return false;
         });
 
+        mGoogleMap.setOnMapClickListener(latLng -> {
+            if (mListener != null)
+                mListener.onLocationSelected(-1);
+        });
+
         mPermissionHandler.requestPermissions((permissions, grantResult, numGranted) -> {
                     if (numGranted > 0) {
                         mGoogleMap.setMyLocationEnabled(true);
@@ -169,11 +174,14 @@ public class MyMapFragment extends SupportMapFragment {
         mMarkerMap.put(locationInfo.getId(), marker);
     }
 
-    public void focusOnLocation(long locationId) {
+    public void focusOnLocation(long locationId, boolean zoom) {
         Marker marker = mMarkerMap.get(locationId);
         if (marker != null) {
             marker.showInfoWindow();
-            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), MARKER_FOCUS_ZOOM));
+            if (zoom)
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), MARKER_FOCUS_ZOOM));
+            else
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
         }
     }
 

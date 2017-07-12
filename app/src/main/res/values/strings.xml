@@ -3,7 +3,7 @@
     <string name="title_activity_map">Map</string>
     <string name="message_too_far">Please zoom in to add locations or use address search box above</string>
     <string name="error_markers_too_close">Please move at least %1$d meters from an existing marker</string>
-    <string name="empty_list_message">The address list is empty\n\Tap on this message to start adding locations</string>
+    <string name="empty_list_message">The address list is empty\n\nTap on this message to start adding locations</string>
     <string name="empty_list_message_two_pane">The address list is empty\n\nPlease use map pane to add locations</string>
     <string name="title_activity_address_list">Address list</string>
 </resources>
