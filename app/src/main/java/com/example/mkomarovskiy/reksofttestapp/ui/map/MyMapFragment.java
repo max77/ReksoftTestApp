@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import com.example.mkomarovskiy.reksofttestapp.IRepository;
 import com.example.mkomarovskiy.reksofttestapp.R;
 import com.example.mkomarovskiy.reksofttestapp.model.ILocationInfo;
 import com.example.mkomarovskiy.reksofttestapp.ui.IPermissionHandler;
@@ -19,7 +18,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -28,11 +26,8 @@ import com.google.maps.android.SphericalUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * ReksoftTestApp
@@ -41,20 +36,17 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MyMapFragment extends SupportMapFragment {
 
+    private static final float MARKER_FOCUS_ZOOM = 13;
+
     private CompositeDisposable mCompositeDisposable = new CompositeDisposable();
-    private IRepository mRepository;
     private IPermissionHandler mPermissionHandler;
     private MyMapFragmentListener mListener;
     private Map<Long, Marker> mMarkerMap = new HashMap<>();
     private ImageView mTargetPointer;
     private int mBottomPadding;
+    private GoogleMap mGoogleMap;
 
     public MyMapFragment() {
-    }
-
-    public MyMapFragment setRepository(IRepository repository) {
-        mRepository = repository;
-        return this;
     }
 
     public MyMapFragment setPermissionHandler(IPermissionHandler permissionHandler) {
@@ -88,10 +80,7 @@ public class MyMapFragment extends SupportMapFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        getMapAsync(map -> {
-            setupMap(map);
-            showAllLocations(map);
-        });
+        getMapAsync(this::setupMap);
     }
 
     @Override
@@ -102,31 +91,40 @@ public class MyMapFragment extends SupportMapFragment {
 
     @SuppressWarnings({"MissingPermission"})
     private void setupMap(GoogleMap map) {
-        map.setOnCameraIdleListener(() -> {
+        mGoogleMap = map;
+
+        mGoogleMap.setOnCameraIdleListener(() -> {
             if (mListener != null)
                 mListener.onCameraMoved();
         });
 
-        map.setOnMapLoadedCallback(() -> setupTargetPointer(map));
+        mGoogleMap.setOnMarkerClickListener(marker -> {
+            if (mListener != null)
+                mListener.onLocationSelected((Long) marker.getTag());
+            return false;
+        });
 
         mPermissionHandler.requestPermissions((permissions, grantResult, numGranted) -> {
                     if (numGranted > 0) {
-                        map.setMyLocationEnabled(true);
-                        map.getUiSettings().setMyLocationButtonEnabled(true);
+                        mGoogleMap.setMyLocationEnabled(true);
+                        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
                     }
                 },
                 true,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION);
 
-        UiSettings uiSettings = map.getUiSettings();
+        UiSettings uiSettings = mGoogleMap.getUiSettings();
         uiSettings.setMapToolbarEnabled(false);
         uiSettings.setZoomControlsEnabled(true);
         uiSettings.setAllGesturesEnabled(true);
+
+        if (mListener != null)
+            mListener.onMapReady();
     }
 
-    private void setupTargetPointer(GoogleMap map) {
-        Point center = map.getProjection().toScreenLocation(map.getCameraPosition().target);
+    private void setupTargetPointer() {
+        Point center = mGoogleMap.getProjection().toScreenLocation(mGoogleMap.getCameraPosition().target);
         int size = mTargetPointer.getMeasuredWidth();
 
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mTargetPointer.getLayoutParams();
@@ -136,35 +134,21 @@ public class MyMapFragment extends SupportMapFragment {
     }
 
     public void showTarget(boolean show) {
-        mTargetPointer.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+        if (mTargetPointer != null)
+            mTargetPointer.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
     public void setMapPadding(int left, int top, int right, int bottom) {
-        getMapAsync(map -> {
-            mBottomPadding = bottom;
-            map.setPadding(left, top, right, bottom);
-        });
+        mBottomPadding = bottom;
+        mGoogleMap.setPadding(left, top, right, bottom);
+        setupTargetPointer();
     }
 
-    public void showAllLocations(GoogleMap map) {
-        mCompositeDisposable.add(mRepository
-                .getAllLocationInfos()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((locations, error) -> {
-                    if (error != null) {
-                        if (mListener != null)
-                            mListener.onError(error.getMessage());
-                    } else
-                        populateMap(map, locations);
-                })
-        );
-    }
-
-    private void populateMap(GoogleMap map, List<ILocationInfo> locations) {
+    public void populateMap(List<ILocationInfo> locations) {
+        mGoogleMap.clear();
         if (locations != null)
             for (ILocationInfo location : locations)
-                addMarker(map, location);
+                addMarker(location);
     }
 
     public boolean canAddMarker(ILocationInfo locationInfo, double threshold) {
@@ -177,11 +161,7 @@ public class MyMapFragment extends SupportMapFragment {
     }
 
     public void addMarker(ILocationInfo locationInfo) {
-        getMapAsync(map -> addMarker(map, locationInfo));
-    }
-
-    private void addMarker(GoogleMap map, ILocationInfo locationInfo) {
-        Marker marker = map.addMarker(new MarkerOptions()
+        Marker marker = mGoogleMap.addMarker(new MarkerOptions()
                 .position(locationInfo.getLatLng())
                 .title(locationInfo.getAddress()));
         marker.setTag(locationInfo.getId());
@@ -189,30 +169,28 @@ public class MyMapFragment extends SupportMapFragment {
         mMarkerMap.put(locationInfo.getId(), marker);
     }
 
-    public void focusOnLocationMarker(long locationId) {
+    public void focusOnLocation(long locationId) {
         Marker marker = mMarkerMap.get(locationId);
         if (marker != null) {
             marker.showInfoWindow();
-            focusOnLatLng(marker.getPosition());
+            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), MARKER_FOCUS_ZOOM));
         }
     }
 
-    public void focusOnLatLng(LatLng latLng) {
-        getMapAsync(map -> map.animateCamera(CameraUpdateFactory.newLatLng(latLng)));
-    }
-
     public void focusOnLatLngBounds(LatLngBounds bounds) {
-        getMapAsync(map -> map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0)));
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
     }
 
-    public void getVisibleBounds(Consumer<LatLngBounds> consumer) {
-        getMapAsync(map -> consumer.accept(map.getProjection().getVisibleRegion().latLngBounds));
+    public LatLngBounds getVisibleBounds() {
+        return mGoogleMap.getProjection().getVisibleRegion().latLngBounds;
     }
 
     interface MyMapFragmentListener {
+        void onMapReady();
+
         void onCameraMoved();
 
-        void onError(String error);
+        void onLocationSelected(long locationId);
     }
 
 }

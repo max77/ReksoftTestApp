@@ -50,29 +50,7 @@ public class DBRepository implements IRepository {
 
     @Override
     public Single<ILocationInfo> getLocationInfoById(long id) {
-        return Single.fromCallable(() -> {
-            Cursor cursor = null;
-
-            try {
-                Log.d(TAG, "Getting location " + id + " from DB...");
-
-                cursor = mDBHelper
-                        .getReadableDatabase()
-                        .query(LocationTable.TABLE_NAME,
-                                LocationTable.LOCATION_COLUMNS,
-                                LocationTable.COLUMN_ID + " = ?",
-                                new String[]{Long.toString(id)},
-                                null, null, null, null);
-
-                if (cursor.moveToFirst())
-                    return locationFromCursor(cursor);
-                return null;
-
-            } finally {
-                if (cursor != null)
-                    cursor.close();
-            }
-        });
+        return Single.fromCallable(() -> getLocationInfoByIdInternal(id));
     }
 
     @Override
@@ -116,12 +94,36 @@ public class DBRepository implements IRepository {
             contentValues.put(LocationTable.COLUMN_LAT, info.getLatLng().latitude);
             contentValues.put(LocationTable.COLUMN_LON, info.getLatLng().longitude);
 
-            return mDBHelper
+            long id = mDBHelper
                     .getWritableDatabase()
                     .insert(LocationTable.TABLE_NAME,
                             null,
-                            contentValues) != -1 ? info : null;
+                            contentValues);
+
+            return getLocationInfoByIdInternal(id);
         });
+    }
+
+    private ILocationInfo getLocationInfoByIdInternal(long id) {
+        Cursor cursor = null;
+
+        try {
+            cursor = mDBHelper
+                    .getReadableDatabase()
+                    .query(LocationTable.TABLE_NAME,
+                            LocationTable.LOCATION_COLUMNS,
+                            LocationTable.COLUMN_ID + " = ?",
+                            new String[]{Long.toString(id)},
+                            null, null, null, null);
+
+            if (cursor.moveToFirst())
+                return locationFromCursor(cursor);
+            return null;
+
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
     }
 
     @Override

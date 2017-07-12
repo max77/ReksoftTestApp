@@ -5,4 +5,5 @@
     <dimen name="textsize_address_max">20sp</dimen>
     <dimen name="textsize_address_min">14sp</dimen>
     <dimen name="textsize_address_step">2sp</dimen>
+    <dimen name="margin_info_message">64dp</dimen>
 </resources>

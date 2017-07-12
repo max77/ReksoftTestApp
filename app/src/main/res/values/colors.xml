@@ -9,4 +9,6 @@
     <color name="colorText">#303030</color>
     <color name="colorHint">#80303030</color>
     <color name="colorMapTarget">@android:color/holo_green_dark</color>
+    <color name="colorSelectedAddressBG">#C0C0C0</color>
+    <color name="colorNormalAddressBG">#F0F0F0</color>
 </resources>

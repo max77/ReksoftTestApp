@@ -3,4 +3,6 @@
     <string name="app_name">ReksoftTestApp</string>
     <string name="message_too_far">Чтобы добавить адрес, приблизьте карту или введите адрес в поле поиска</string>
     <string name="error_markers_too_close">Необходимо отступить как минимум на %1$dм от другого маркера</string>
+    <string name="empty_list_message">Список адресов пуст\n\nНажатие на это сообщение спасет ситуацию :)</string>
+    <string name="empty_list_message_two_pane">Список адресов пуст\n\nДобавляйте адреса на панели с картой</string>
 </resources>
